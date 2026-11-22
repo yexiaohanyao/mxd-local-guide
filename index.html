@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WingsMS 本地图鉴 · 搜索 / 升级路线</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("mxd-theme");
+        if (t !== "light" && t !== "dark") t = "dark";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="brand">
+        <h1>冒险岛本地图鉴 <span class="badge">离线 · cn / 0.83 资料</span></h1>
+        <div class="sub">搜索 + 资料图鉴 + 升级路线 + 移动地图 + 攻略专栏（含职业任务 / 任务流程 / Boss 简表）· 面向 WingsMS 自用（资料可能与私服有差异）</div>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="theme-toggle" id="themeToggle" aria-label="切换浅色/深色背景">浅色背景</button>
+      </div>
+    </header>
+
+    <nav class="nav-tabs" id="viewTabs">
+      <button type="button" data-view="home" class="active">首页搜索</button>
+      <button type="button" data-view="browse">资料图鉴</button>
+      <button type="button" data-view="leveling" class="nav-priority">升级路线</button>
+      <button type="button" data-view="mapnav" class="nav-priority">移动地图</button>
+      <button type="button" data-view="guides" class="nav-priority">攻略专栏</button>
+    </nav>
+
+    <section class="search-card" id="searchCard">
+      <div class="search-row">
+        <input id="q" type="search" placeholder="搜索名称或 ID（装备 / 怪物 / 道具 / 任务 / NPC）" autocomplete="off" />
+      </div>
+      <div class="filters" id="typeFilters"></div>
+      <div class="meta-line" id="status">正在加载资料…</div>
+    </section>
+
+    <section id="homeView">
+      <div class="layout" id="homeLayout">
+        <div class="list" id="resultList"><div class="loading">输入关键词开始搜索</div></div>
+        <aside class="detail empty" id="detailPanel">选择一条结果查看详情</aside>
+      </div>
+    </section>
+
+    <section id="browseView" class="hidden">
+      <div class="browse-grid" id="browseCards"></div>
+      <div class="layout" id="browseLayout">
+        <div class="list" id="browseList"><div class="loading">选择上方分类</div></div>
+        <aside class="detail empty" id="browseDetail">选择条目查看详情</aside>
+      </div>
+    </section>
+
+    <section id="levelingView" class="hidden">
+      <div class="level-controls search-card">
+        <div class="search-row" style="align-items:center">
+          <label class="lvl-label" for="levelInput">当前等级</label>
+          <input id="levelInput" type="number" min="1" max="200" value="55" />
+          <label class="lvl-label" for="jobInput">职业（可选）</label>
+          <input id="jobInput" type="text" placeholder="如：主教 / 夜行者" autocomplete="off" />
+          <button type="button" id="levelGo" class="primary-btn">查看路线</button>
+        </div>
+        <div class="search-row guide-find-row" style="align-items:center;margin-top:10px">
+          <label class="lvl-label" for="guideFind">本篇直达</label>
+          <input id="guideFind" type="search" placeholder="搜地图 / 任务 / NPC / 关键词（不匹配等级时用）" autocomplete="off" />
+          <button type="button" id="guideFindGo" class="ghost-btn">定位下一处</button>
+          <span class="meta-line" id="guideFindStatus" style="margin:0"></span>
+        </div>
+        <div class="area-shortcuts" id="areaShortcuts" aria-label="地区快捷入口"></div>
+        <div class="meta-line" id="levelStatus">输入等级后显示对应升级攻略与图鉴关联；等级对不上时用「本篇直达」或地区芯片跳转</div>
+      </div>
+      <div class="bracket-nav" id="bracketNav"></div>
+      <div class="leveling-wide" id="levelingLayout">
+        <div class="level-main" id="levelMain"><div class="loading">加载升级攻略…</div></div>
+        <aside class="level-toc" id="levelToc" aria-label="段落目录">
+          <div class="level-toc-title">段落 / 步骤提要</div>
+          <div class="level-toc-empty">加载后显示目录</div>
+        </aside>
+        <aside class="level-drawer detail empty" id="levelDetail" hidden>
+          <div class="level-drawer-bar">
+            <strong>图鉴详情</strong>
+            <button type="button" class="ghost-btn" id="levelDetailClose">关闭</button>
+          </div>
+          <div class="level-drawer-body" id="levelDetailBody">点击怪物 / 地图 / 任务 / NPC / 道具芯片查看图鉴详情</div>
+        </aside>
+        <div class="level-drawer-backdrop" id="levelDetailBackdrop" hidden></div>
+      </div>
+    </section>
+
+
+    <section id="mapnavView" class="hidden">
+      <div class="mapnav-overview-bar panel">
+        <div>
+          <div class="item-title">移动地图（总览）</div>
+          <div class="meta-line" style="margin:0">城镇 / 大陆互通一图 · 约 2.7MB · 点下方按钮在新标签打开原图</div>
+        </div>
+        <div class="mapnav-overview-actions">
+          <a class="primary-btn" href="./guides/hub/images/移动地图.png" target="_blank" rel="noopener">新标签查看原图</a>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:12px; padding:12px; text-align:center">
+        <a href="./guides/hub/images/移动地图.png" target="_blank" rel="noopener" title="新标签查看原图">
+          <img src="./guides/hub/images/移动地图.png" alt="移动地图总览" style="max-width:100%; height:auto; border-radius:8px"
+               onerror="this.onerror=null;this.src='./guides/hub/images/yidong-map.png';" />
+        </a>
+        <div class="meta-line" style="margin-top:10px">点击图片或上方按钮，可在新标签查看原图</div>
+      </div>
+    </section>
+
+    <div class="map-lightbox" id="mapLightbox" hidden>
+      <div class="map-lightbox-bar">
+        <strong id="mapLightboxTitle">地图</strong>
+        <div class="map-lightbox-tools">
+          <button type="button" class="ghost-btn" data-zoom="-">缩小</button>
+          <button type="button" class="ghost-btn" data-zoom="+">放大</button>
+          <button type="button" class="ghost-btn" data-zoom="reset">复位</button>
+          <button type="button" class="ghost-btn" id="mapLightboxClose">关闭</button>
+        </div>
+      </div>
+      <div class="map-lightbox-stage" id="mapLightboxStage">
+        <img id="mapLightboxImg" alt="map" draggable="false" />
+      </div>
+      <div class="map-lightbox-hint">滚轮缩放 · 拖拽平移 · Esc 关闭</div>
+    </div>
+
+
+    <section id="guidesView" class="hidden">
+      <div class="guides-layout">
+        <aside class="guides-side panel">
+          <div class="section-title">栏目</div>
+          <div class="guides-cats" id="guidesCats"></div>
+        </aside>
+        <div class="guides-main panel">
+          <div class="guides-toolbar">
+            <div>
+              <div class="item-title" id="guidesCatTitle">选择左侧栏目</div>
+              <div class="meta-line" id="guidesStatus">正在准备攻略目录…</div>
+            </div>
+            <input id="guidesSearch" type="search" placeholder="在本栏目搜索标题" autocomplete="off" />
+          </div>
+          <div class="guides-list" id="guidesList"></div>
+          <article class="guides-article hidden" id="guidesArticle">
+            <div class="guides-article-bar">
+              <button type="button" class="ghost-btn" id="guidesBack">← 返回列表</button>
+              <a class="ghost-btn" id="guidesSource" href="#" target="_blank" rel="noopener">来源原文</a>
+            </div>
+            <h2 id="guidesArticleTitle"></h2>
+            <div class="guide-body" id="guidesArticleBody"></div>
+          </article>
+          <div id="guidesJobquests" class="guides-jobquests hidden">
+            <div class="jobquests-note" id="jobquestsNote"></div>
+            <div class="section-title" style="margin:0 0 8px">任务链</div>
+            <div class="jobquests-cats jobquests-cats-inline" id="jobquestsCats"></div>
+            <div class="jobquests-list" id="jobquestsList"><div class="loading">加载职业任务摘录…</div></div>
+            <!-- keep ids for legacy JS -->
+            <div class="hidden" id="jobquestsTitle"></div>
+            <div class="hidden" id="jobquestsStatus"></div>
+            <input id="jobquestsSearch" type="search" class="hidden" tabindex="-1" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      个人离线自用；来源 <a href="https://www.longlegmxd.com/" target="_blank" rel="noopener">longlegmxd.com</a>
+      cn edition + 升级攻略；非官方整理，与 WingsMS 可能存在差异。不含 GMSCW。
+      攻略专栏「物价统计」只放第三方站外链接，本站不抓取物价，也不说明该页面是否准确或是否还能打开。
+      图鉴图标默认在线 CDN；升级攻略正文与配图已本地化，可离线阅读。
+    </footer>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
