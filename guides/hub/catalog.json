@@ -988,6 +988,15 @@
       "special": null,
       "articles": [
         {
+          "title": "法师1hit/2hit练级魔法攻击面板参考",
+          "sourceUrl": "",
+          "kind": "article",
+          "id": "法师练级魔法攻击面板",
+          "slug": "法师练级魔法攻击面板",
+          "bodyHtmlFile": "articles/法师练级魔法攻击面板.html",
+          "listNote": "社区原图 V4.0-20240906 · 制作人江湖骗子（KOOK 江湖骗子#9361）。假定魔法力−智力=200，火毒、冰雷满激化。"
+        },
+        {
           "title": "主教的HP装",
           "sourceUrl": "https://www.longlegmxd.com/2026/05/14/%e4%b8%bb%e6%95%99%e7%9a%84hp%e8%a3%85/",
           "kind": "article",
